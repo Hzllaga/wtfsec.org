@@ -32,8 +32,7 @@ exit  //回到原本的用户
             <span class=n>headers</span><span class=o>=</span><span class=p>{</span><span class=sa></span><span class=s2>&#34;</span><span class=s2>Accept</span><span class=s2>&#34;</span><span class=p>:</span> <span class=sa></span><span class=s2>&#34;</span><span class=s2>application/json</span><span class=s2>&#34;</span><span class=p>}</span><span class=p>,</span>
             <span class=n>params</span><span class=o>=</span><span class=n>email_data</span><span class=p>,</span>
             <span class=n>auth</span><span class=o>=</span><span class=p>(</span><span class=sa></span><span class=s2>&#34;</span><span class=s2>api</span><span class=s2>&#34;</span><span class=p>,</span> <span class=n>settings</span><span class=p>[</span><span class=sa></span><span class=s2>&#34;</span><span class=s2>mailgun_api_key</span><span class=s2>&#34;</span><span class=p>]</span> <span class=p>)</span><span class=p>,</span>
-            <span class=n>callback</span><span class=o>=</span><span class=n>email_sent_callback</span><span class=p>)</span></code></pre></div>懒得改这段代码，就按照他的请求模拟一个发邮件的API，一下代码适用于Apache+PHP：
-先安装PHPMailer：</p><pre><code>composer require phpmailer/phpmailer
+            <span class=n>callback</span><span class=o>=</span><span class=n>email_sent_callback</span><span class=p>)</span></code></pre></div>懒得改这段代码，就按照他的请求模拟一个发邮件的API，以下代码适用于Apache+PHP：</p><p>先安装PHPMailer：</p><pre><code>composer require phpmailer/phpmailer
 </code></pre><p>配置伪静态：</p><pre><code>RewriteEngine on
 RewriteRule ^v3/域名/messages$   SendMailController.php?action=send
 RewriteCond %{HTTP:Authorization} ^(.*)
