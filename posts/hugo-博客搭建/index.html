@@ -1,0 +1,109 @@
+<!doctype html><html lang=zh-cn><meta charset=utf-8><meta name=generator content="Hugo 0.64.0"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name=color-scheme content="light dark"><meta name=supported-color-schemes content="light dark"><meta name=keywords content="Hugo"><meta name=description content="前段時間網站從Wordpress遷移到Hugo，一直想把折騰的紀錄寫出來，但是有點懶拖到現在才寫。"><title>Hugo 博客搭建&nbsp;&ndash;&nbsp;WTFSec</title><link rel=stylesheet href=/css/core.min.58bc4672a8045a0810ba4ad30a08c6d5589db1109ca0aa2e07c5e5438201ea8d11642ffa31d8ee7665d6a1b66ab9a3c5.css integrity=sha384-WLxGcqgEWggQukrTCgjG1VidsRCcoKouB8XlQ4IB6o0RZC/6MdjudmXWobZquaPF><meta name=twitter:card content="summary"><meta name=twitter:title content="Hugo 博客搭建"><body><section id=header><div class="header wrap"><span class="header left-side"><a class="site home" href=/><span class="site name">WTFSec</span></a></span>
+<span class="header right-side"><div class="nav wrap"><nav class=nav><a class="nav item" href=/categories/>分类</a><a class="nav item" href=/tags/>标签</a><a class="nav item" href=/link/>友链</a>
+<input placeholder="Google 站内搜索" id=search_input style=width:150px>
+<button onclick=search()><svg width="13" height="13" viewBox="0 0 13 13"><path d="m4.8495 7.8226c.82666.0 1.5262-.29146 2.0985-.87438.57232-.58292.86378-1.2877.87438-2.1144.010599-.82666-.28086-1.5262-.87438-2.0985-.59352-.57232-1.293-.86378-2.0985-.87438-.8055-.010599-1.5103.28086-2.1144.87438-.60414.59352-.8956 1.293-.87438 2.0985.021197.8055.31266 1.5103.87438 2.1144.56172.60414 1.2665.8956 2.1144.87438zm4.4695.2115 3.681 3.6819-1.259 1.284-3.6817-3.7.0019784-.69479-.090043-.098846c-.87973.76087-1.92 1.1413-3.1207 1.1413-1.3553.0-2.5025-.46363-3.4417-1.3909s-1.4088-2.0686-1.4088-3.4239.4696-2.4966 1.4088-3.4239c.9392-.92727 2.0864-1.3969 3.4417-1.4088 1.3553-.011889 2.4906.45771 3.406 1.4088.9154.95107 1.379 2.0924 1.3909 3.4239.0 1.2126-.38043 2.2588-1.1413 3.1385l.098834.090049z"/></svg></button></nav></div><script>function search(){const search_value=document.getElementById("search_input").value;if(search_value!==''){window.open("/search/?q="+search_value,"_blank");}}
+document.getElementById("search_input").addEventListener("keydown",function(e){if(e.key==="Enter"){search()}});</script></span></div></section><section id=content><div class=article-container><section class="article header"><h1 class="article title">Hugo 博客搭建</h1><p class="article date"><span class=lang><a>3374575857</a> </span>Saturday, May 9, 2020</p></section><article class="article markdown-body"><p>前段時間網站從Wordpress遷移到Hugo，一直想把折騰的紀錄寫出來，但是有點懶拖到現在才寫。</p><p>搭建完成的成果：暫時沒有 (跟<a href=https://wtfsec.org/ target=_blank>本站</a>一樣的主題)</p><h2 id=全新安裝>全新安裝</h2><h3 id=安裝hugo>安裝Hugo</h3><p>Mac: <code>brew install hugo</code></p><p>Windows: <code>choco install hugo -confirm</code> 或者 <code>scoop install hugo</code></p><p>詳細請參考<a href=https://gohugo.io/getting-started/installing/ target=_blank>官網</a></p><h3 id=創建hugo網站>創建Hugo網站</h3><pre><code>hugo new site wtfsec-test
+cd wtfsec-test
+git init
+</code></pre><h3 id=添加主題>添加主題</h3><p>本文以二次修改過的hugo-notepadium主題為例</p><pre><code>git submodule add https://github.com/3374575857/hugo-notepadium.git themes/hugo-notepadium
+</code></pre><p>在config.toml 中添加 <code>theme = "hugo-notepadium"</code></p><h3 id=添加首篇文章>添加首篇文章</h3><pre><code>hugo new posts/my-first-post.md
+</code></pre><p>默認生成的文章中有<code>draft: true</code>設定為true就是草稿，這篇文章網站就不會顯示，所以得設置成false或者刪除這句。</p><h3 id=運行hugo本地服務>運行Hugo本地服務</h3><pre><code>hugo server --watch  --verbose
+</code></pre><h3 id=生成網站靜態文件>生成網站靜態文件</h3><pre><code>hugo -D
+</code></pre><p>命令運行後，會在網站根目錄下創建一個public目錄，將裡面的所有文件上傳到空間上就行了。</p><h3 id=提交源代碼到github倉庫>提交源代碼到github倉庫</h3><p>將源碼放在github上能再換環境或者電腦炸了的情況下不丟失心血，並且快速的上手。
+日後換環境可以參考我文章下方的方法把源代碼下載回來。</p><pre><code>git add .
+git commit -m &quot;first commit&quot;
+# 設定遠程倉庫（請在自己的github上創建一個自己的倉庫）
+git remote add origin https://github.com/3374575857/wtfsec-test.git
+git push -u origin master
+</code></pre><h2 id=config模板>config模板</h2><p>提供了一個自用的config模板供參考</p><div class=highlight><pre class=chroma><code class=language-toml data-lang=toml><span class=c>#網站網址</span>
+<span class=nx>baseURL</span> <span class=p>=</span> <span class=s2>&#34;http://example.org/&#34;</span>
+<span class=c>#網站名稱</span>
+<span class=nx>title</span> <span class=p>=</span> <span class=s2>&#34;My New Hugo Site&#34;</span>
+<span class=c>#主題</span>
+<span class=nx>theme</span> <span class=p>=</span> <span class=s2>&#34;hugo-notepadium&#34;</span>
+<span class=c>#網站底部版權</span>
+<span class=nx>copyright</span> <span class=p>=</span> <span class=s2>&#34;©2020 My New Hugo Site.&#34;</span>
+
+<span class=nx>hasCJKLanguage</span> <span class=p>=</span> <span class=kc>true</span>
+
+<span class=nx>enableRobotsTXT</span> <span class=p>=</span> <span class=kc>true</span>
+<span class=nx>paginate</span> <span class=p>=</span> <span class=mi>5</span>
+
+<span class=nx>defaultContentLanguage</span> <span class=p>=</span> <span class=s2>&#34;zh-tw&#34;</span>
+
+	
+<span class=c># Enable Disqus</span>
+<span class=c>#disqusShortname = &#34;XXX&#34;</span>
+
+<span class=c># Google Analytics</span>
+<span class=c>#googleAnalytics = &#34;&#34;</span>
+
+<span class=p>[</span><span class=nx>markup</span><span class=p>.</span><span class=nx>highlight</span><span class=p>]</span>
+<span class=nx>codeFences</span> <span class=p>=</span> <span class=kc>true</span>
+<span class=nx>noClasses</span> <span class=p>=</span> <span class=kc>false</span>
+
+<span class=p>[</span><span class=nx>markup</span><span class=p>.</span><span class=nx>goldmark</span><span class=p>.</span><span class=nx>renderer</span><span class=p>]</span>
+<span class=nx>unsafe</span> <span class=p>=</span> <span class=kc>true</span>  <span class=c># enable raw HTML in Markdown</span>
+
+<span class=p>[</span><span class=nx>params</span><span class=p>]</span>
+<span class=nx>style</span> <span class=p>=</span> <span class=s2>&#34;light&#34;</span>  <span class=c># default: auto. light: light theme, dark: dark theme, auto: based on system.</span>
+<span class=nx>dateFormat</span> <span class=p>=</span> <span class=s2>&#34;Monday, January 2, 2006&#34;</span>  <span class=c># if unset, default is &#34;2006-01-02&#34;</span>
+<span class=nx>logo</span> <span class=p>=</span> <span class=s2>&#34;&#34;</span>  <span class=c># if you have a logo png</span>
+<span class=c>#slogan = &#34;&#34;</span>
+<span class=nx>license</span> <span class=p>=</span> <span class=s2>&#34;show License&#34;</span>  <span class=c># CC License</span>
+
+<span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>comments</span><span class=p>]</span>
+<span class=nx>enable</span> <span class=p>=</span> <span class=kc>false</span>  <span class=c># En/Disable comments globally, default: false. You can always enable comments on per page.</span>
+
+<span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>math</span><span class=p>]</span>
+<span class=nx>enable</span> <span class=p>=</span> <span class=kc>false</span>  <span class=c># optional: true, false. Enable globally, default: false. You can always enable math on per page.</span>
+<span class=nx>use</span> <span class=p>=</span> <span class=s2>&#34;katex&#34;</span>  <span class=c># option: &#34;katex&#34;, &#34;mathjax&#34;. default: &#34;katex&#34;</span>
+
+<span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>syntax</span><span class=p>]</span>
+<span class=nx>use</span> <span class=p>=</span> <span class=s2>&#34;none&#34;</span>  <span class=c># builtin: &#34;prismjs&#34;, &#34;hljs&#34;. &#34;none&#34; means Chroma</span>
+<span class=nx>theme</span> <span class=p>=</span> <span class=s2>&#34;xcode&#34;</span>
+<span class=nx>darkTheme</span> <span class=p>=</span> <span class=s2>&#34;xcode-dark&#34;</span>  <span class=c># apply this theme in dark mode</span>
+
+<span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>nav</span><span class=p>]</span>
+<span class=nx>showCategories</span> <span class=p>=</span> <span class=kc>true</span>       <span class=c># /categories/</span>
+<span class=nx>showTags</span> <span class=p>=</span> <span class=kc>true</span>             <span class=c># /tags/</span>
+
+<span class=c># custom navigation items</span>
+
+<span class=c>#[[params.nav.custom]]</span>
+<span class=c>#title = &#34;About&#34;</span>
+<span class=c>#url = &#34;/about&#34;</span>
+
+<span class=p>[</span><span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>nav</span><span class=p>.</span><span class=nx>custom</span><span class=p>]</span><span class=p>]</span>
+    <span class=nx>title</span> <span class=p>=</span> <span class=s2>&#34;友連&#34;</span>
+    <span class=nx>url</span> <span class=p>=</span> <span class=s2>&#34;/link/&#34;</span>
+
+<span class=p>[</span><span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>link</span><span class=p>]</span><span class=p>]</span>
+    <span class=nx>title</span> <span class=p>=</span> <span class=s2>&#34;WTFSec&#34;</span>
+    <span class=nx>url</span> <span class=p>=</span> <span class=s2>&#34;https://wtfsec.org/&#34;</span>
+
+	
+<span class=c>#Google 相關</span>
+<span class=p>[</span><span class=nx>params</span><span class=p>.</span><span class=nx>google</span><span class=p>]</span>
+	<span class=c>#Google 自訂搜尋</span>
+	<span class=c>#搜尋引擎 ID</span>
+	<span class=c>#cx = &#34;&#34;</span>
+	<span class=c>#Google 自動化廣告 </span>
+	<span class=c>#adsense = &#34;&#34;</span>
+</code></pre></div><h2 id=hugo-notepadium-二次開發主題>hugo-notepadium 二次開發主題</h2><h3 id=特性>特性</h3><ul><li>添加了友情連接功能</li><li>添加了google站內搜尋功能</li><li>修改了列表頁底部分頁邏輯</li><li>添加了html meta標籤：keyword、description</li><li>其他細節修改</li></ul><h3 id=友情連接>友情連接</h3><p>使用友情連接功能，必須要在<code>content</code>目錄下添加<code>link</code>目錄並且添加<code>_index.md</code>文件
+內容如下：</p><div class=highlight><pre class=chroma><code class=language-md data-lang=md>+++
+title = &#34;友情連接&#34;
+type = &#34;link&#34;
++++
+</code></pre></div><h3 id=站內搜尋>站內搜尋</h3><p>使用站內搜尋功能，必須要在<code>content</code>目錄下添加<code>search</code>目錄並且添加<code>_index.md</code>文件
+內容如下：</p><div class=highlight><pre class=chroma><code class=language-md data-lang=md>+++
+title = &#34;站內搜尋&#34;
+type = &#34;search&#34;
++++
+</code></pre></div><p>在<code>config.toml</code> 最下面的·<code>cx = ""</code>中填上自訂搜索的id。</p><h2 id=使用本站提供好的環境搭建>使用本站提供好的環境搭建</h2><p>本站提供的<a href=https://github.com/3374575857/wtfsec-test.git target=_blank>代碼</a>，只需要修改配置文件中少數的地方，再把文章刪除掉，就可以開始寫博客了。</p><p>Github repo : <a href=https://github.com/3374575857/wtfsec-test.git target=_blank>https://github.com/3374575857/wtfsec-test.git</a></p><h3 id=克隆項目>克隆項目</h3><pre><code>git clone https://github.com/3374575857/wtfsec-test.git &amp;&amp; cd wtfsec-test
+</code></pre><h3 id=下載子模塊主題>下載子模塊主題</h3><p>在網站目錄下運行</p><pre><code>git submodule init
+git submodule update --recursive
+</code></pre><p>如果主題有更新，就在主題的目錄下運行這個命令，更新git子模塊中的主題：</p><pre><code>cd themes/hugo-notepadium
+git pull origin master
+</code></pre><h3 id=運行hugo本地服務-1>運行Hugo本地服務</h3><pre><code>hugo server --watch  --verbose
+</code></pre><h2 id=後記>後記</h2><p>文章寫一個段落了，基本上使用應該不會有太大的問題，有機會再寫一篇hugo 搭配 github action 持續集成自動生成自動部署的文章，更加方便省事一些。</p></article><section class="article labels"><a class=category href=/categories/%E5%8E%9F%E5%88%9B/>原创</a><a class=tag href=/tags/hugo/>Hugo</a></section></div><div class="article bottom"><section class="article navigation"><p><a class=link href=/posts/remote-desktop-organizer-rdo-%E5%AF%86%E7%A0%81%E8%A7%A3%E5%AF%86/><span class=li>&larr;</span>Remote Desktop Organizer (RDO) 密码解密</a></p></section></div></section><section id=footer><div class=footer-wrap><p class=copyright>©2014-2020 WTFSec.</p><p class=powerby><span>Powered by </span><a href=https://gohugo.io target=_blank>Hugo</a><span> and the </span><a href=https://themes.gohugo.io/hugo-notepadium/ target=_blank>Notepadium</a></p><p class=powerby><span>CDN by </span><a href=https://cf.wtfsec.org target=_blank>Cloudflare</a><span> and </span><a href="https://console.upyun.com/register/?invite=H1xhvqTVV" target=_blank>又拍云</a></p></div></section><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;ga('create','UA-83215806-1','auto');ga('send','pageview');}</script><script async src=https://www.google-analytics.com/analytics.js></script><script data-ad-client=ca-pub-4220670081232153 async src=https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js></script></body></html>
